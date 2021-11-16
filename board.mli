@@ -9,7 +9,7 @@ val init_board : unit -> board
 (* move the chess from pos A to pos B *)
 val move: board -> (int * int) -> (int * int) -> condition
 
-(* validate move *)
+(* validate move, return false if the mode is not valid *)
 val validate: board -> (int * int) -> (int * int) -> bool
 
 (* check for check and checkmate *)
