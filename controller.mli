@@ -1,3 +1,6 @@
+(* PvP or PvE *)
+val mode
+
 (* main control loop *)
 val main : () -> ()
 
