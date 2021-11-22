@@ -13,7 +13,7 @@ val move: board -> (int * int) -> (int * int) -> (board * condition)
 val validate: board -> (int * int) -> (int * int) -> bool
 
 (* check for check and checkmate *)
-val get_condition: board -> condition
+val get_condition: board -> player -> condition
 
 
 
