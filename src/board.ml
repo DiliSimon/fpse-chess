@@ -62,6 +62,7 @@ let set_board_pos (board: board) (idx: int * int) (pos: pos) : board option =
 let get_condition (_: board) : condition =
     Normal
 
+(* TODO: validate movement based on chess piece type*)
 let validate (board: board) (f: int * int) (t: (int * int)) : bool =
     match f, t with
     | (rf, cf), (rt, ct) -> if rf = rt && cf = ct then false
@@ -76,7 +77,16 @@ let validate (board: board) (f: int * int) (t: (int * int)) : bool =
 let move (board: board) (f: int * int) (t: (int * int)) : (board * condition) =
     if not (validate board f t) then (board, Fail) else
     match get_board_pos board t with
-    | Some(p) -> (match set_board_pos board t p with
-                                | Some(nb) -> (nb, Normal)
-                                | None -> (board, Fail))
-    | None -> (board, Fail)
+    | Some(Occupied(curr_chess)) -> 
+                    (
+                    let (rt, _) = t in
+                    (* Pawn Promotion. TODO: allow choosing piece type promoted to*)
+                    let next_pos = 
+                    (if not (((equal_chess curr_chess (Pawn(White))) || (equal_chess curr_chess (Pawn(Black)))) && (rt = 0 || rt = 7)) then Occupied(curr_chess)
+                    else Occupied(Queen(get_player curr_chess))) 
+                    in                    
+                    match set_board_pos board t next_pos with
+                    | Some(nb) -> (nb, Normal)
+                    | None -> (board, Fail)
+                    )
+    | _ -> (board, Fail)
