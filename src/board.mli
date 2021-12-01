@@ -22,3 +22,13 @@ val set_board_pos: 'a list list -> (int * int) -> 'a -> 'a list list option
 val is_blocked: board -> (int) -> int -> int -> int -> bool
 
 val get_possible_moves: board -> chess -> int -> int -> (int * int) list
+
+val append_possible_moves_to_map: chess -> pos list list list -> (int * int) list -> pos list list list
+
+val get_next_step_map: board -> player -> pos list list list
+
+val is_check: board -> player -> bool
+
+val find_king: board -> player -> (int * int)
+
+val is_checkmate : board -> player -> bool
