@@ -24,7 +24,7 @@ let init_pos (row: int) (col: int): pos =
     else
     match row, col with
     | 1, _ -> Occupied(Pawn(White))
-    | 7, _ -> Occupied(Pawn(Black))
+    | 6, _ -> Occupied(Pawn(Black))
     | 0, 0 -> Occupied(Rook(White))
     | 0, 1 -> Occupied(Knight(White))
     | 0, 2 -> Occupied(Bishop(White))
@@ -33,14 +33,14 @@ let init_pos (row: int) (col: int): pos =
     | 0, 5 -> Occupied(Bishop(White))
     | 0, 6 -> Occupied(Knight(White))
     | 0, 7 -> Occupied(Rook(White))
-    | 6, 0 -> Occupied(Rook(Black))
-    | 6, 1 -> Occupied(Knight(Black))
-    | 6, 2 -> Occupied(Bishop(Black))
-    | 6, 3 -> Occupied(Queen(Black))
-    | 6, 4 -> Occupied(King(Black))
-    | 6, 5 -> Occupied(Bishop(Black))
-    | 6, 6 -> Occupied(Knight(Black))
-    | 6, 7 -> Occupied(Rook(Black))
+    | 7, 0 -> Occupied(Rook(Black))
+    | 7, 1 -> Occupied(Knight(Black))
+    | 7, 2 -> Occupied(Bishop(Black))
+    | 7, 3 -> Occupied(Queen(Black))
+    | 7, 4 -> Occupied(King(Black))
+    | 7, 5 -> Occupied(Bishop(Black))
+    | 7, 6 -> Occupied(Knight(Black))
+    | 7, 7 -> Occupied(Rook(Black))
     | _, _ -> raise (PosErr "invalid pos")
 
 let init_board _ : board =
