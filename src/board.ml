@@ -8,8 +8,14 @@ type condition = Check | Checkmate | Fail of string | Normal [@@deriving equal]
 
 exception PosErr of string
 
+let is_empty_pos (pos: pos) : bool =
+    match pos with
+    | Occupied(_) -> false
+    | Empty -> true
+
 let opponent_of (player: player) : player =
     if equal_player player White then Black else White
+
 let get_player (chess: chess) : player =
     match chess with
     | King(p) -> p
@@ -18,6 +24,11 @@ let get_player (chess: chess) : player =
     | Bishop(p) -> p
     | Knight(p) -> p
     | Pawn(p) -> p
+
+let get_player_from_pos (pos: pos) : player =
+    match pos with
+    | Occupied(c) -> get_player c
+    | Empty -> raise (PosErr "tried to get player from empty pos")
 
 let init_pos (row: int) (col: int): pos =
     if row > 1 && row < 6 then Empty
@@ -46,11 +57,24 @@ let init_pos (row: int) (col: int): pos =
 let init_board _ : board =
     List.init 8 ~f:(fun rn -> List.init 8 ~f:(fun cn -> init_pos rn cn))
 
+let get_board_pos_exn (board: 'a list list) (idx: int * int): 'a =
+    match idx with
+    | (row, col) -> List.nth_exn (List.nth_exn board row) col
+
 let get_board_pos (board: 'a list list) (idx: int * int): 'a option =
     match idx with
     | (row, col) -> (match (List.nth board row) with
                     | Some(rl) -> List.nth rl col
                     | None -> None)
+
+let set_board_pos_exn (board: 'a list list) ~(idx: int * int) ~(pos: 'a) : 'a list list =
+    match idx with
+    | (row, col) -> if row < 0 || row >= 8 || col < 0 || col >= 8 
+                    then raise (PosErr ("invalid pos in is_blocked_helper; " ^ "row: " ^ (string_of_int row) ^ " col: " ^ (string_of_int col)))
+                    else
+                    List.mapi board ~f:(fun ridx  r -> if ridx = row then
+                                                        List.mapi r ~f:(fun cidx c -> if cidx = col then pos else c)
+                                                        else r)
 
 let set_board_pos (board: 'a list list) (idx: int * int) (pos: 'a) : 'a list list option =
     match idx with
@@ -62,24 +86,44 @@ let set_board_pos (board: 'a list list) (idx: int * int) (pos: 'a) : 'a list lis
                         )
 
 let rec is_blocked_helper (board: board) (ridx: int) (cidx: int) (next_ridx: int) (next_cidx: int) (rd: int) (cd: int) (curr_player: player): bool =
-    if (ridx - rd = next_ridx) && (cidx - cd = next_cidx) then false
+    let curr_pos = (match get_board_pos board (ridx, cidx) with
+                    | Some(p) -> p
+                    | None -> raise (PosErr ("invalid pos in is_blocked_helper; " ^ "row: " ^ (string_of_int ridx) ^ " col: " ^ (string_of_int cidx))))
+    in
+    if (ridx = next_ridx) && (cidx = next_cidx) 
+    (* If the piece at target position is of the same color, then the path is blocked *)
+    then (if (not (is_empty_pos curr_pos)) then (equal_player (get_player_from_pos curr_pos) curr_player) else false)
     else
     match get_board_pos board (ridx, cidx) with
-    | Some(Occupied(chess)) -> if not (ridx = next_ridx && cidx = next_cidx) then true else (equal_player (get_player chess) curr_player)
+    (* if there's other chess pieces along the path then it is blocked*)
+    | Some(Occupied(_)) -> true
     | Some(Empty) -> is_blocked_helper board (ridx+rd) (cidx+cd) next_ridx next_cidx rd cd curr_player
-    | None -> raise (PosErr "invalid pos in is_blocked_helper")
-
+    | None -> raise (PosErr ("invalid pos in is_blocked_helper; " ^ "row: " ^ (string_of_int ridx) ^ " col: " ^ (string_of_int cidx)))
 
 (* Return true if the line from (ridx, cidx) to (next_ridx, next_cidx) contains other pieces*)
 let is_blocked (board: board) (ridx: int) (cidx: int) (next_ridx: int) (next_cidx: int) : bool =
-    let rd = (ridx - next_ridx) / Int.abs((ridx - next_ridx)) in
-    let cd = (cidx - next_cidx) / Int.abs((cidx - next_cidx)) in
+    let rd = if (Int.abs((next_ridx - ridx)) = 0) then 0 else (next_ridx - ridx) / Int.abs((next_ridx - ridx)) in
+    let cd = if (Int.abs((next_cidx - cidx)) = 0) then 0 else (next_cidx - cidx) / Int.abs((next_cidx - cidx)) in
     match get_board_pos board (ridx, cidx) with
-    | Some(Occupied(c)) ->  is_blocked_helper board ridx cidx next_ridx next_cidx rd cd (get_player c)
+    | Some(Occupied(c)) ->  is_blocked_helper board (ridx+rd) (cidx+cd) next_ridx next_cidx rd cd (get_player c)
     | Some(Empty) -> raise (PosErr "position doesn't contain piece")
     | None -> raise (PosErr "invalid pos")
 
+let is_valid_pawn_move (board: board) (curr_player: player) (ridx: int) (cidx: int) (next_r: int) (next_c: int) : bool =
+    if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
+    let next_pos = get_board_pos_exn board (next_r, next_c) in
+    if cidx = next_c then 
+        is_empty_pos next_pos && (((abs (ridx - next_r)) = 1) || (is_empty_pos (get_board_pos_exn board (next_r - (if next_r > ridx then 1 else (-1)), next_c))))
+    else if is_empty_pos next_pos then false
+    else not (equal_player (get_player_from_pos next_pos) curr_player)
 
+let is_valid_knight_move (board: board) (curr_player: player) (next_r: int) (next_c: int) : bool =
+    if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
+    match get_board_pos_exn board (next_r, next_c) with
+    | Occupied(chess) -> chess |> get_player |> equal_player curr_player |> not
+    | Empty -> true
+
+(* return lists of possible moves for the chess at position (ridx, cidx)*)
 let get_possible_moves (board: board) (chess: chess) (ridx: int) (cidx: int) : (int * int) list =
     match chess with
     | King(_) -> List.filter ~f:(fun idx -> match idx with | (r, c) -> r >= 0 && r < 8 && c >= 0 && c < 8) 
@@ -94,8 +138,28 @@ let get_possible_moves (board: board) (chess: chess) (ridx: int) (cidx: int) : (
                     @ (List.init 8 ~f:(fun i -> (ridx+i, cidx-i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx+i)))
                     )
                     |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> not (is_blocked board ridx cidx next_r next_c))
-    | _ -> []
 
+    | Rook(_) -> List.filter ~f:(fun idx -> match idx with | (r, c) -> r >= 0 && r < 8 && c >= 0 && c < 8) 
+                    (
+                    (List.init 8 ~f:(fun i -> (ridx+i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx+i))) 
+                    @ (List.init 8 ~f:(fun i -> (ridx-i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx-i)))
+                    )
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> not (is_blocked board ridx cidx next_r next_c))
+
+    | Bishop(_) -> List.filter ~f:(fun idx -> match idx with | (r, c) -> r >= 0 && r < 8 && c >= 0 && c < 8) 
+                    (
+                    (List.init 8 ~f:(fun i -> (ridx+i, cidx+i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx-i)))
+                    @ (List.init 8 ~f:(fun i -> (ridx+i, cidx-i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx+i)))
+                    )
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> not (is_blocked board ridx cidx next_r next_c))
+                    
+    | Pawn(White) -> ([(ridx+1, cidx); (ridx+1, cidx+1); (ridx+1, cidx-1)]) @ (if ridx = 1 then [(ridx + 2, cidx)] else [])
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_pawn_move board White ridx cidx next_r next_c)
+
+    | Pawn(Black) -> ([(ridx-1, cidx); (ridx-1, cidx+1); (ridx-1, cidx-1)]) @ (if ridx = 6 then [(ridx - 2, cidx)] else [])
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_pawn_move board Black ridx cidx next_r next_c)
+    | Knight(player) -> [(ridx+2, cidx+1); (ridx+2,cidx-1); (ridx-2, cidx+1); (ridx-2,cidx-1);(ridx+1, cidx+2); (ridx+1,cidx-2); (ridx-1, cidx+2); (ridx-1,cidx-2)]
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_knight_move board player next_r next_c)
 
 let rec append_possible_moves_to_map (curr_piece: chess) (curr_map: pos list list list) (possible_moves: (int * int) list) : pos list list list =
     match possible_moves with

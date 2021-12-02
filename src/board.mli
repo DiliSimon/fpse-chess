@@ -15,7 +15,11 @@ val validate: board -> (int * int) -> (int * int) -> bool
 (* check for check and checkmate *)
 val get_condition: board -> player -> condition
 
+val get_board_pos_exn: 'a list list -> (int * int) -> 'a
+
 val get_board_pos: 'a list list -> (int * int) -> 'a option
+
+val set_board_pos_exn: 'a list list -> idx: (int * int) -> pos: 'a -> 'a list list
 
 val set_board_pos: 'a list list -> (int * int) -> 'a -> 'a list list option
 
