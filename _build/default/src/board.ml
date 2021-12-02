@@ -165,7 +165,7 @@ let validate (board: board) (f: int * int) (t: (int * int)) : bool =
 
 let move (board: board) (f: int * int) (t: (int * int)) : (board * condition) =
     if not (validate board f t) then (board, Fail("invalid move")) else
-    match get_board_pos board t with
+    match get_board_pos board f with
     | Some(Occupied(curr_chess)) -> 
                     (
                     let (rt, _) = t in
