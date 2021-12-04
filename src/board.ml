@@ -109,6 +109,7 @@ let is_blocked (board: board) (ridx: int) (cidx: int) (next_ridx: int) (next_cid
     | Some(Empty) -> raise (PosErr "position doesn't contain piece")
     | None -> raise (PosErr "invalid pos")
 
+(* TODO: add check for movement direction for all below functions*)
 let is_valid_pawn_move (board: board) (curr_player: player) (ridx: int) (cidx: int) (next_r: int) (next_c: int) : bool =
     if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
     let next_pos = get_board_pos_exn board (next_r, next_c) in
@@ -123,35 +124,45 @@ let is_valid_knight_move (board: board) (curr_player: player) (next_r: int) (nex
     | Occupied(chess) -> chess |> get_player |> equal_player curr_player |> not
     | Empty -> true
 
+let is_valid_king_move (board: board) (curr_player: player) (next_r: int) (next_c: int) : bool =
+    if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
+    match get_board_pos_exn board (next_r, next_c) with
+    | Occupied(chess) -> chess |> get_player |> equal_player curr_player |> not
+    | Empty -> true
+
+let is_valid_queen_move (board: board) (ridx: int) (cidx: int) (next_r: int) (next_c: int) : bool =
+    if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
+    not (is_blocked board ridx cidx next_r next_c)
+
+let is_valid_rook_move (board: board) (ridx: int) (cidx: int) (next_r: int) (next_c: int) : bool =
+    if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
+    not (is_blocked board ridx cidx next_r next_c)
+
+let is_valid_bishop_move (board: board) (ridx: int) (cidx: int) (next_r: int) (next_c: int) : bool =
+    if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
+    not (is_blocked board ridx cidx next_r next_c)
+
 (* return lists of possible moves for the chess at position (ridx, cidx)*)
 let get_possible_moves (board: board) (chess: chess) (ridx: int) (cidx: int) : (int * int) list =
     match chess with
-    | King(_) -> List.filter ~f:(fun idx -> match idx with | (r, c) -> r >= 0 && r < 8 && c >= 0 && c < 8) 
-                    [(ridx+1, cidx); (ridx-1, cidx); (ridx, cidx+1); (ridx, cidx-1); (ridx+1, cidx+1); (ridx+1, cidx-1); (ridx-1, cidx+1); (ridx-1, cidx-1)]
-                |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> not (is_blocked board ridx cidx next_r next_c))
+    | King(player) ->[(ridx+1, cidx); (ridx-1, cidx); (ridx, cidx+1); (ridx, cidx-1); (ridx+1, cidx+1); (ridx+1, cidx-1); (ridx-1, cidx+1); (ridx-1, cidx-1)]
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_king_move board player next_r next_c)
 
-    | Queen(_) -> List.filter ~f:(fun idx -> match idx with | (r, c) -> r >= 0 && r < 8 && c >= 0 && c < 8) 
-                    (
-                    (List.init 8 ~f:(fun i -> (ridx+i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx+i))) 
+    | Queen(_) -> ((List.init 8 ~f:(fun i -> (ridx+i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx+i))) 
                     @ (List.init 8 ~f:(fun i -> (ridx-i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx-i)))
                     @ (List.init 8 ~f:(fun i -> (ridx+i, cidx+i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx-i)))
                     @ (List.init 8 ~f:(fun i -> (ridx+i, cidx-i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx+i)))
                     )
-                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> not (is_blocked board ridx cidx next_r next_c))
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_queen_move board ridx cidx next_r next_c)
 
-    | Rook(_) -> List.filter ~f:(fun idx -> match idx with | (r, c) -> r >= 0 && r < 8 && c >= 0 && c < 8) 
-                    (
-                    (List.init 8 ~f:(fun i -> (ridx+i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx+i))) 
-                    @ (List.init 8 ~f:(fun i -> (ridx-i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx-i)))
-                    )
-                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> not (is_blocked board ridx cidx next_r next_c))
+    | Rook(_) -> ((List.init 8 ~f:(fun i -> (ridx+i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx+i))) 
+                @ (List.init 8 ~f:(fun i -> (ridx-i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx-i))))
+                |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_rook_move board ridx cidx next_r next_c)
 
-    | Bishop(_) -> List.filter ~f:(fun idx -> match idx with | (r, c) -> r >= 0 && r < 8 && c >= 0 && c < 8) 
-                    (
-                    (List.init 8 ~f:(fun i -> (ridx+i, cidx+i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx-i)))
+    | Bishop(_) -> ((List.init 8 ~f:(fun i -> (ridx+i, cidx+i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx-i)))
                     @ (List.init 8 ~f:(fun i -> (ridx+i, cidx-i))) @ (List.init 8 ~f:(fun i -> (ridx-i, cidx+i)))
                     )
-                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> not (is_blocked board ridx cidx next_r next_c))
+                    |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_bishop_move board ridx cidx next_r next_c)
                     
     | Pawn(White) -> ([(ridx+1, cidx); (ridx+1, cidx+1); (ridx+1, cidx-1)]) @ (if ridx = 1 then [(ridx + 2, cidx)] else [])
                     |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_pawn_move board White ridx cidx next_r next_c)
@@ -176,9 +187,7 @@ let add_next_step (board: board) (pos: pos) (ridx: int) (cidx: int) (curr_player
     match pos with
     | Empty -> curr_map
     | Occupied(chess) -> if not (equal_player (get_player chess) curr_player) then curr_map
-                        else 
-                        let possible_moves = get_possible_moves board chess ridx cidx in
-                        append_possible_moves_to_map chess curr_map possible_moves
+                        else get_possible_moves board chess ridx cidx |> append_possible_moves_to_map chess curr_map
 
 
 let get_next_step_map (board: board) (curr_player: player) : pos list list list =
@@ -214,8 +223,8 @@ let get_condition (board: board) (curr_player: player) : condition =
     else Normal
 
 (* TODO: 
-1. validate movement based on chess piece type
-2. must move king when checked*)
+1. validate movement based on chess piece type a.k.a run is_valid_xxx_move
+2. must resolve checked condition*)
 let validate (board: board) (f: int * int) (t: (int * int)) : bool =
     match f, t with
     | (rf, cf), (rt, ct) -> if rf = rt && cf = ct then false
