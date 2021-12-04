@@ -55,13 +55,35 @@ let test_is_check _ =
   assert_bool "White is checked" (is_check board_check White);
   assert_bool "Black is not checked" (not (is_check board_check Black))
 
+let test_move _ =
+  (*  normal move *)
+  assert_equal (move board_check White (2, 6) (4, 4)) 
+  @@ ((set_board_pos_exn board_check ~idx:(4, 4) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Normal);
+  (* normal move *)
+  assert_equal (move board_check White (2, 6) (5, 3)) 
+  @@ ((set_board_pos_exn board_check ~idx:(5, 3) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Normal);
+  (* invalid move blocked by other pieces *)
+  assert_equal (move board_check White (2, 6) (6, 2)) 
+  @@ (board_check, Fail("invalid move"));
+  (* move doesn't match piece type *)
+  assert_equal (move board_check White (2, 6) (1, 6)) 
+  @@ (board_check, Fail("invalid move"));
+  (* still checked after move *)
+  assert_equal (move board_check Black (5, 3) (4, 4)) 
+  @@ (board_check, Fail("still checked after move"));
+  (* Black knight captures white bishop *)
+  assert_equal (move board_check Black (4, 7) (2, 6)) 
+  @@ ((set_board_pos_exn board_check ~idx:(2, 6) ~pos:(Occupied(Knight(Black))) |> set_board_pos_exn ~idx:(4, 7) ~pos:Empty), Normal)
+
+
 let section1_tests =
   "Section 1" >: test_list [
     "test_is_unblocked" >:: test_is_blocked;
     "test_find_king" >:: test_find_king;
     "test_get_possible_moves" >:: test_get_possible_moves;
     "test_get_next_step_map" >:: test_get_next_step_map;
-    "test_is_check" >:: test_is_check
+    "test_is_check" >:: test_is_check;
+    "test_move" >:: test_move
   ]
 
 let series =

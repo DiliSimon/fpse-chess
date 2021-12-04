@@ -259,12 +259,14 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
                     let (rt, _) = t in
                     (* Pawn Promotion. TODO: allow choosing piece type promoted to*)
                     let next_pos = 
-                    (if not (((equal_chess curr_chess (Pawn(White))) || (equal_chess curr_chess (Pawn(Black)))) && (rt = 0 || rt = 7)) then Occupied(curr_chess)
-                    else Occupied(Queen(get_player curr_chess))) 
+                        (if not (((equal_chess curr_chess (Pawn(White))) || (equal_chess curr_chess (Pawn(Black)))) && (rt = 0 || rt = 7)) then Occupied(curr_chess)
+                        else Occupied(Queen(get_player curr_chess))) 
                     in                    
                     match set_board_pos board t next_pos with
-                    | Some(nb) -> (match set_board_pos nb f Empty with
-                                    | Some(nb1) -> (nb1, Normal)
+                    | Some(nb) ->   (match set_board_pos nb f Empty with
+                                    | Some(nb1) ->  if (is_check nb1 (opponent_of curr_player)) 
+                                                    then (board, Fail("still checked after move")) 
+                                                    else (nb1, Normal)
                                     | None -> (board, Fail("fail to set piece")))
                     | None -> (board, Fail("fail to set piece"))
                     )
