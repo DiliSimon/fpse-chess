@@ -7,10 +7,10 @@ type condition = Check | Checkmate | Fail of string | Normal [@@deriving equal]
 val init_board : unit -> board
 
 (* move the chess from pos A to pos B *)
-val move: board -> (int * int) -> (int * int) -> (board * condition)
+val move: board -> player -> (int * int) -> (int * int) -> (board * condition)
 
 (* validate move, return false if the move is not valid *)
-val validate: board -> (int * int) -> (int * int) -> bool
+val validate: board -> player -> (int * int) -> (int * int) -> bool
 
 (* check for check and checkmate *)
 val get_condition: board -> player -> condition
