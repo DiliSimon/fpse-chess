@@ -5,3 +5,23 @@
     core)
   (preprocess (pps ppx_jane))
 )
+
+(library
+  (name gui)
+  (modules gui)
+  (libraries 
+    core
+    board)
+  (preprocess (pps ppx_jane))
+)
+
+
+(executable
+  (name controller)
+  (modules controller)
+  (libraries
+    board
+    core
+    gui)
+    (preprocess (pps ppx_jane))
+  )

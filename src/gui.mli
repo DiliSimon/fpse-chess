@@ -1,4 +1,6 @@
-val print_board: board -> ()
+open Board
 
-val print_result: player -> ()
+val print_board: board -> player -> unit
+
+val print_result: player -> unit
 

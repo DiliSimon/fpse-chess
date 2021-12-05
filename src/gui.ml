@@ -1,4 +1,7 @@
-let print_board (b:board) =
+open Board
+open Core
+
+let print_board (b:board) (p:player) =
   print_string " 01234567\n";
   List.iteri b ~f:(
     fun i row ->
@@ -6,7 +9,7 @@ let print_board (b:board) =
       List.iter row ~f:(
       fun piece ->
       (match piece with
-      | Empty(_) -> " "
+      | Empty -> " "
       | Occupied(King(White)) -> "♔"
       | Occupied(Queen(White)) -> "♕"
       | Occupied(Rook(White)) -> "♖"
@@ -22,7 +25,11 @@ let print_board (b:board) =
       |> print_string
     );
     print_string "\n"
-  )
+  );
+  print_string @@ 
+    (match p with 
+    | White -> "White"
+    | Black -> "Black") ^ "'s turn\n"
 
 let print_result (p:player) =
   (match p with
