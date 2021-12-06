@@ -3,7 +3,7 @@
 
 
 (* main control loop *)
-(* val main : () -> () *)
+
 
 open Board
 open Core
@@ -111,7 +111,7 @@ let command =
           let orig_2 = parse_move instruction 0 1 in
           let targ_1 = parse_move instruction 1 0 in
           let targ_2 = parse_move instruction 1 1 in
-          let (new_b,res) = move (read_game "cur_game") (orig_1,orig_2) (targ_1,targ_2)
+          let (new_b,res) = move (read_game "cur_game") (!curr_player) (orig_1,orig_2) (targ_1,targ_2)
           in
           (match res with
           | Normal -> 
@@ -128,9 +128,7 @@ let command =
             print_board new_b (!curr_player);
             print_string "Check!"
           | Checkmate ->
-            (match !curr_player with
-            | Black -> print_string "Black win!"
-            | White -> print_string "White win!")
+            print_result (!curr_player)
           | Fail(m) -> print_string m)
         | (_, _, Some file, None) ->
           save_game (read_game "cur_game") file;

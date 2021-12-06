@@ -1,18 +1,22 @@
-(*
-  Put the tests for lib.ml functions here
-*)
 
 (* open Core;; *)
 open OUnit2;;
 open Board;;
 
 let board_initial = init_board ();;
-let board_check = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+let board_check = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty))))
           |> set_board_pos_exn ~idx:(2, 5) ~pos:(Occupied(King(White)))
           |> set_board_pos_exn ~idx:(2, 6) ~pos:(Occupied(Bishop(White))) 
           |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King(Black)))
           |> set_board_pos_exn ~idx:(5, 5) ~pos:(Occupied(Bishop(Black)))
           |> set_board_pos_exn ~idx:(4, 7) ~pos:(Occupied(Knight(Black)))
+;;
+
+let board_check_2 = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty))))
+  |> set_board_pos_exn ~idx:(7, 5) ~pos:(Occupied(King(White)))
+  |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King(Black)))
+  |> set_board_pos_exn ~idx:(1, 1) ~pos:(Occupied(Rook(Black)))
+  |> set_board_pos_exn ~idx:(1, 2) ~pos:(Occupied(Queen(Black)))
 ;;
 
 let test_is_blocked _ =
@@ -31,6 +35,8 @@ let test_find_king _ =
 
 let test_get_possible_moves _ =
   assert_equal (get_possible_moves board_initial (King(White)) 0 4) @@ [];
+  assert_equal (get_possible_moves board_initial (Queen(White)) 0 4) @@ [];
+  assert_equal (get_possible_moves board_initial (Rook(White)) 0 4) @@ [];
   assert_equal (get_possible_moves board_initial (Pawn(White)) 1 3) @@ [(2, 3); (3, 3)];
   assert_equal (get_possible_moves board_initial (Pawn(Black)) 6 3) @@ [(5, 3); (4, 3)];
   assert_equal (get_possible_moves board_check (Knight(Black)) 4 7) @@ [(6, 6); (2, 6); (3, 5)]
@@ -59,6 +65,12 @@ let test_move _ =
   (*  normal move *)
   assert_equal (move board_check White (2, 6) (4, 4)) 
   @@ ((set_board_pos_exn board_check ~idx:(4, 4) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Normal);
+  (*  normal move *)
+  assert_equal (move board_check_2 Black (1, 1) (0, 1))
+  @@ ((set_board_pos_exn board_check_2 ~idx:(0, 1) ~pos:(Occupied(Rook(Black))) |> set_board_pos_exn ~idx:(1, 1) ~pos:Empty), Normal);
+  (*  normal move *)
+  assert_equal (move board_check_2 Black (1, 2) (0, 2)) 
+  @@ ((set_board_pos_exn board_check_2 ~idx:(0, 2) ~pos:(Occupied(Queen(Black))) |> set_board_pos_exn ~idx:(1, 2) ~pos:Empty), Normal); 
   (* normal move *)
   assert_equal (move board_check White (2, 6) (5, 3)) 
   @@ ((set_board_pos_exn board_check ~idx:(5, 3) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Normal);
@@ -75,7 +87,7 @@ let test_move _ =
   assert_equal (move board_check Black (4, 7) (2, 6)) 
   @@ ((set_board_pos_exn board_check ~idx:(2, 6) ~pos:(Occupied(Knight(Black))) |> set_board_pos_exn ~idx:(4, 7) ~pos:Empty), Normal)
 
-
+ 
 let section1_tests =
   "Section 1" >: test_list [
     "test_is_unblocked" >:: test_is_blocked;
