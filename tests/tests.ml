@@ -13,9 +13,9 @@ let board_check = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty))))
 ;;
 
 let board_check_2 = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty))))
-  |> set_board_pos_exn ~idx:(7, 5) ~pos:(Occupied(King(White)))
-  |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King(Black)))
-  |> set_board_pos_exn ~idx:(1, 1) ~pos:(Occupied(Rook(Black)))
+  |> set_board_pos_exn ~idx:(7, 5) ~pos:(Occupied(King(White, true)))
+  |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King(Black, true)))
+  |> set_board_pos_exn ~idx:(1, 1) ~pos:(Occupied(Rook(Black, true)))
   |> set_board_pos_exn ~idx:(1, 2) ~pos:(Occupied(Queen(Black)))
 ;;
 
@@ -80,7 +80,7 @@ let test_move _ =
   @@ ((set_board_pos_exn board_check ~idx:(4, 4) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Normal);
   (*  normal move *)
   assert_equal (move board_check_2 Black (1, 1) (0, 1))
-  @@ ((set_board_pos_exn board_check_2 ~idx:(0, 1) ~pos:(Occupied(Rook(Black))) |> set_board_pos_exn ~idx:(1, 1) ~pos:Empty), Normal);
+  @@ ((set_board_pos_exn board_check_2 ~idx:(0, 1) ~pos:(Occupied(Rook(Black, true))) |> set_board_pos_exn ~idx:(1, 1) ~pos:Empty), Normal);
   (*  normal move *)
   assert_equal (move board_check_2 Black (1, 2) (0, 2)) 
   @@ ((set_board_pos_exn board_check_2 ~idx:(0, 2) ~pos:(Occupied(Queen(Black))) |> set_board_pos_exn ~idx:(1, 2) ~pos:Empty), Normal); 
