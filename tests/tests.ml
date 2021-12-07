@@ -8,9 +8,9 @@ open Board;;
 
 let board_initial = init_board ();;
 let board_check = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
-          |> set_board_pos_exn ~idx:(2, 5) ~pos:(Occupied(King(White)))
+          |> set_board_pos_exn ~idx:(2, 5) ~pos:(Occupied(King((White, true))))
           |> set_board_pos_exn ~idx:(2, 6) ~pos:(Occupied(Bishop(White))) 
-          |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King(Black)))
+          |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King((Black, true))))
           |> set_board_pos_exn ~idx:(5, 5) ~pos:(Occupied(Bishop(Black)))
           |> set_board_pos_exn ~idx:(4, 7) ~pos:(Occupied(Knight(Black)))
 ;;
@@ -30,7 +30,7 @@ let test_find_king _ =
   assert_equal (find_king board_initial Black) @@ (7, 4)
 
 let test_get_possible_moves _ =
-  assert_equal (get_possible_moves board_initial (King(White)) 0 4) @@ [];
+  assert_equal (get_possible_moves board_initial (King((White, true))) 0 4) @@ [];
   assert_equal (get_possible_moves board_initial (Pawn(White)) 1 3) @@ [(2, 3); (3, 3)];
   assert_equal (get_possible_moves board_initial (Pawn(Black)) 6 3) @@ [(5, 3); (4, 3)];
   assert_equal (get_possible_moves board_check (Knight(Black)) 4 7) @@ [(6, 6); (2, 6); (3, 5)]
@@ -42,12 +42,12 @@ let test_get_next_step_map _ =
  [[]; []; [Occupied (Bishop Black)]; []; []; []; [Occupied (Knight Black)]; []];
  [[]; []; []; [Occupied (Bishop Black)]; []; [Occupied (Knight Black)]; 
   []; [Occupied (Bishop Black)]];
- [[]; []; [Occupied (King Black)]; [Occupied (King Black)];
-  [Occupied (Bishop Black); Occupied (King Black)]; [];
+ [[]; []; [Occupied (King(Black, true))]; [Occupied (King(Black, true))];
+  [Occupied (Bishop Black); Occupied (King(Black, true))]; [];
   [Occupied (Bishop Black)]; []];
- [[]; []; [Occupied (King Black)]; []; [Occupied (King Black)]; []; []; []];
- [[]; []; [Occupied (King Black)]; [Occupied (King Black)];
-  [Occupied (Bishop Black); Occupied (King Black)]; [];
+ [[]; []; [Occupied (King(Black, true))]; []; [Occupied (King(Black, true))]; []; []; []];
+ [[]; []; [Occupied (King(Black, true))]; [Occupied (King(Black, true))];
+  [Occupied (Bishop Black); Occupied (King(Black, true))]; [];
   [Occupied (Bishop Black); Occupied (Knight Black)]; []];
  [[]; []; []; [Occupied (Bishop Black)]; []; []; []; [Occupied (Bishop Black)]]])
 

@@ -1,7 +1,7 @@
 open Core
 
 type player = White | Black [@@deriving equal]
-type chess = King of player | Queen of player | Rook of player | Bishop of player | Knight of player | Pawn of player [@@deriving equal]
+type chess = King of (player * bool) | Queen of player | Rook of (player * bool) | Bishop of player | Knight of player | Pawn of player [@@deriving equal]
 type pos = Occupied of chess | Empty [@@deriving equal]
 type board = pos list list [@@deriving equal]
 type condition = Check | Checkmate | Fail of string | Normal [@@deriving equal]
@@ -18,9 +18,9 @@ let opponent_of (player: player) : player =
 
 let get_player (chess: chess) : player =
     match chess with
-    | King(p) -> p
+    | King((p, _)) -> p
     | Queen(p) -> p
-    | Rook(p) -> p
+    | Rook((p, _)) -> p
     | Bishop(p) -> p
     | Knight(p) -> p
     | Pawn(p) -> p
@@ -36,22 +36,22 @@ let init_pos (row: int) (col: int): pos =
     match row, col with
     | 1, _ -> Occupied(Pawn(White))
     | 6, _ -> Occupied(Pawn(Black))
-    | 0, 0 -> Occupied(Rook(White))
+    | 0, 0 -> Occupied(Rook(White, false))
     | 0, 1 -> Occupied(Knight(White))
     | 0, 2 -> Occupied(Bishop(White))
     | 0, 3 -> Occupied(Queen(White))
-    | 0, 4 -> Occupied(King(White))
+    | 0, 4 -> Occupied(King(White, false))
     | 0, 5 -> Occupied(Bishop(White))
     | 0, 6 -> Occupied(Knight(White))
-    | 0, 7 -> Occupied(Rook(White))
-    | 7, 0 -> Occupied(Rook(Black))
+    | 0, 7 -> Occupied(Rook(White, false))
+    | 7, 0 -> Occupied(Rook(Black, false))
     | 7, 1 -> Occupied(Knight(Black))
     | 7, 2 -> Occupied(Bishop(Black))
     | 7, 3 -> Occupied(Queen(Black))
-    | 7, 4 -> Occupied(King(Black))
+    | 7, 4 -> Occupied(King(Black, false))
     | 7, 5 -> Occupied(Bishop(Black))
     | 7, 6 -> Occupied(Knight(Black))
-    | 7, 7 -> Occupied(Rook(Black))
+    | 7, 7 -> Occupied(Rook(Black, false))
     | _, _ -> raise (PosErr "invalid pos")
 
 let init_board _ : board =
@@ -154,7 +154,7 @@ let is_valid_bishop_move (board: board) (ridx: int) (cidx: int) (next_r: int) (n
 (* return lists of possible moves for the chess at position (ridx, cidx)*)
 let get_possible_moves (board: board) (chess: chess) (ridx: int) (cidx: int) : (int * int) list =
     match chess with
-    | King(player) ->[(ridx+1, cidx); (ridx-1, cidx); (ridx, cidx+1); (ridx, cidx-1); (ridx+1, cidx+1); (ridx+1, cidx-1); (ridx-1, cidx+1); (ridx-1, cidx-1)]
+    | King((player, _)) ->[(ridx+1, cidx); (ridx-1, cidx); (ridx, cidx+1); (ridx, cidx-1); (ridx+1, cidx+1); (ridx+1, cidx-1); (ridx-1, cidx+1); (ridx-1, cidx-1)]
                     |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_king_move board player ridx cidx next_r next_c)
 
     | Queen(_) -> ((List.init 8 ~f:(fun i -> (ridx+i, cidx))) @ (List.init 8 ~f:(fun i -> (ridx, cidx+i))) 
@@ -208,7 +208,7 @@ let get_next_step_map (board: board) (curr_player: player) : pos list list list 
 let find_king (board: board) (target_player: player) : (int * int) =
     let king_pos = ref (-1, -1) in
     let (_: board) = List.mapi board ~f:(fun ridx r -> List.mapi r ~f:(fun cidx pos -> match pos with 
-                                                                                    | Occupied(King(p)) -> if equal_player p target_player then king_pos := (ridx, cidx); pos
+                                                                                    | Occupied(King((p, _))) -> if equal_player p target_player then king_pos := (ridx, cidx); pos
                                                                                     | _ -> pos ))
     in
     !king_pos
@@ -242,7 +242,7 @@ let validate (board: board) (curr_player: player) (f: int * int) (t: (int * int)
                             | Some(Empty), _ -> false
                             | Some(Occupied(chess)), _ -> if not (equal_player (get_player chess) curr_player) then false else
                                                             (match chess with
-                                                            | King(player) -> is_valid_king_move board player rf cf rt ct
+                                                            | King((player, _)) -> is_valid_king_move board player rf cf rt ct
                                                             | Queen(_) -> is_valid_queen_move board rf cf rt ct
                                                             | Rook(_) -> is_valid_rook_move board rf cf rt ct
                                                             | Bishop(_) -> is_valid_bishop_move board rf cf rt ct
@@ -259,7 +259,8 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
                     let (rt, _) = t in
                     (* Pawn Promotion. TODO: allow choosing piece type promoted to*)
                     let next_pos = 
-                        (if not (((equal_chess curr_chess (Pawn(White))) || (equal_chess curr_chess (Pawn(Black)))) && (rt = 0 || rt = 7)) then Occupied(curr_chess)
+                        (if not (((equal_chess curr_chess (Pawn(White))) || (equal_chess curr_chess (Pawn(Black)))) && (rt = 0 || rt = 7)) 
+                        then (match curr_chess with | King(p, _) -> Occupied(King(p, true)) | Rook(p, _) -> Occupied(Rook(p, true)) | _ -> Occupied(curr_chess))
                         else Occupied(Queen(get_player curr_chess))) 
                     in                    
                     match set_board_pos board t next_pos with
@@ -271,3 +272,7 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
                     | None -> (board, Fail("fail to set piece"))
                     )
     | _ -> (board, Fail("fail to get piece"))
+
+let castling (board: board) (curr_player: player) (is_kingside: bool) : bool =
+    if equal_player curr_playe Black
+    then (let black_king)

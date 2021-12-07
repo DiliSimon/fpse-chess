@@ -1,5 +1,5 @@
 type player = White | Black [@@deriving equal]
-type chess = King of player | Queen of player | Rook of player | Bishop of player | Knight of player | Pawn of player [@@deriving equal]
+type chess = King of (player * bool) | Queen of player | Rook of (player * bool) | Bishop of player | Knight of player | Pawn of player [@@deriving equal]
 type pos = Occupied of chess | Empty [@@deriving equal]
 type board = pos list list [@@deriving equal]
 type condition = Check | Checkmate | Fail of string | Normal [@@deriving equal]
@@ -14,6 +14,8 @@ val validate: board -> player -> (int * int) -> (int * int) -> bool
 
 (* check for check and checkmate *)
 val get_condition: board -> player -> condition
+
+val castling : board -> player -> bool -> bool
 
 val get_board_pos_exn: 'a list list -> (int * int) -> 'a
 
