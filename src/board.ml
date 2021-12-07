@@ -273,6 +273,45 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
                     )
     | _ -> (board, Fail("fail to get piece"))
 
-let castling (board: board) (curr_player: player) (is_kingside: bool) : bool =
-    if equal_player curr_playe Black
-    then (let black_king)
+let castling (board: board) (curr_player: player) (is_kingside: bool) : board option =
+    match curr_player, is_kingside with
+    | Black, false  ->  (match (get_board_pos_exn board (7, 4)), (get_board_pos_exn board (7, 0)) with
+                        | Occupied(King(Black, false)), Occupied(Rook(Black, false)) -> (if (is_valid_rook_move board 7 0 7 3) 
+                                                                                        then Some(set_board_pos_exn board ~idx:(7, 0) ~pos:Empty 
+                                                                                                    |> set_board_pos_exn ~idx:(7, 4) ~pos:Empty
+                                                                                                    |> set_board_pos_exn ~idx:(7, 3) ~pos:(Occupied(Rook(Black, true)))
+                                                                                                    |> set_board_pos_exn ~idx:(7, 2) ~pos:(Occupied(King(Black, true))))
+                                                                                        else None
+                                                                                        )
+                        | _, _ -> None
+                        )
+    | White, false  ->  (match (get_board_pos_exn board (0, 4)), (get_board_pos_exn board (0, 0)) with
+                        | Occupied(King(Black, false)), Occupied(Rook(Black, false)) -> (if (is_valid_rook_move board 0 0 0 3) 
+                                                                                        then Some(set_board_pos_exn board ~idx:(0, 0) ~pos:Empty 
+                                                                                                    |> set_board_pos_exn ~idx:(0, 4) ~pos:Empty
+                                                                                                    |> set_board_pos_exn ~idx:(0, 3) ~pos:(Occupied(Rook(White, true)))
+                                                                                                    |> set_board_pos_exn ~idx:(0, 2) ~pos:(Occupied(King(White, true))))
+                                                                                        else None
+                                                                                        )
+                        | _, _ -> None
+                        )
+    | Black, true  ->  (match (get_board_pos_exn board (7, 4)), (get_board_pos_exn board (7, 7)) with
+                        | Occupied(King(Black, false)), Occupied(Rook(Black, false)) -> (if (is_valid_rook_move board 7 7 7 5) 
+                                                                                        then Some(set_board_pos_exn board ~idx:(7, 7) ~pos:Empty 
+                                                                                                    |> set_board_pos_exn ~idx:(7, 4) ~pos:Empty
+                                                                                                    |> set_board_pos_exn ~idx:(7, 5) ~pos:(Occupied(Rook(Black, true)))
+                                                                                                    |> set_board_pos_exn ~idx:(7, 6) ~pos:(Occupied(King(Black, true))))
+                                                                                        else None
+                                                                                        )
+                        | _, _ -> None
+                        )
+    | White, true  ->  (match (get_board_pos_exn board (0, 4)), (get_board_pos_exn board (0, 7)) with
+                        | Occupied(King(White, false)), Occupied(Rook(White, false)) -> (if (is_valid_rook_move board 0 7 0 5) 
+                                                                                        then Some(set_board_pos_exn board ~idx:(0, 7) ~pos:Empty 
+                                                                                                    |> set_board_pos_exn ~idx:(0, 4) ~pos:Empty
+                                                                                                    |> set_board_pos_exn ~idx:(0, 5) ~pos:(Occupied(Rook(White, true)))
+                                                                                                    |> set_board_pos_exn ~idx:(0, 6) ~pos:(Occupied(King(White, true))))
+                                                                                        else None
+                                                                                        )
+                        | _, _ -> None
+                        )

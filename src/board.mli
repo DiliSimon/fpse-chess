@@ -15,7 +15,8 @@ val validate: board -> player -> (int * int) -> (int * int) -> bool
 (* check for check and checkmate *)
 val get_condition: board -> player -> condition
 
-val castling : board -> player -> bool -> bool
+(* returns none if castling is invalid *)
+val castling : board -> player -> bool -> board option
 
 val get_board_pos_exn: 'a list list -> (int * int) -> 'a
 
