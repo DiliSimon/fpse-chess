@@ -18,6 +18,8 @@ val get_condition: board -> player -> condition
 (* returns none if castling is invalid *)
 val castling : board -> player -> bool -> board option
 
+val opponent_of: player -> player
+
 val get_board_pos_exn: 'a list list -> (int * int) -> 'a
 
 val get_board_pos: 'a list list -> (int * int) -> 'a option
@@ -39,3 +41,5 @@ val is_check: board -> player -> bool
 val find_king: board -> player -> (int * int)
 
 val is_checkmate : board -> player -> bool
+
+val get_player : chess -> player
