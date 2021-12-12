@@ -6,17 +6,20 @@ sig
     type value
     val min_value : value
     val max_value : value
+    (* compare two values *)
     val compare : value -> value -> int
+    (* evaluate the board from the given player's perspective *)
     val eval : board -> player -> value
 end
 
 module type Bot =
 sig
     type move
-    (* None if no valid move can be made *)
+    (* Returns the best move for the current player; None if no valid move can be made *)
     val get_best_move : board -> player -> move option
 end
 
+(* Basic evaluator that sums the value of all present chess pieces *)
 module BaseEval : Evaluator = 
 struct
     type value = Finite of int | Inf | NInf
@@ -46,15 +49,26 @@ struct
                         ~f:(fun accum2 pos -> accum2 +
                             (match pos with | Empty -> (0) | Occupied(piece) -> get_piece_value piece))))
         in
-        let curr_check = (if is_check board curr_player then (match curr_player with | Black -> 100 | White -> -100) else 0) in
-        let curr_checkmate = (if is_checkmate board curr_player then (match curr_player with | Black -> 100000 | White -> -100000) else 0) in
+        let curr_check = 
+            (if is_check board curr_player 
+            then (match curr_player with | Black -> 100 | White -> -100) 
+            else 0) 
+        in
+        let curr_checkmate = 
+            (if is_checkmate board curr_player 
+            then (match curr_player with | Black -> 100000 | White -> -100000) 
+            else 0) 
+        in
         Finite(score + curr_check + curr_checkmate)
 
 end
 
-module MinimaxBot (Eval: Evaluator) : Bot =
+(* Chess bot that uses minimax algorithm; reference: https://www.javatpoint.com/mini-max-algorithm-in-ai *)
+module MinimaxBot (Eval: Evaluator): Bot with type move = (int * int) * (int * int) =
 struct
     type move = (int * int) * (int * int)
+
+    let depth_limit = 3
     
     let rec eval_board (board: board) ~(curr_player: player) ~(curr_depth: int) ~(limit: int) : (Eval.value) =
         if is_checkmate board Black then Eval.min_value
@@ -94,7 +108,7 @@ struct
         else
         match curr_player with
         | Black -> let next_board_scores = List.map next_boards 
-                    ~f:(fun (b, _) -> eval_board b ~curr_player:White ~curr_depth:(0) ~limit:3)
+                    ~f:(fun (b, _) -> eval_board b ~curr_player:White ~curr_depth:(0) ~limit:depth_limit)
                     in 
                     let (best_idx, _) = 
                         List.foldi next_board_scores 
@@ -105,7 +119,7 @@ struct
                             else (best_idx, curr_max))
                     in Some(List.nth_exn all_moves best_idx)
         | White -> let next_board_scores = List.map next_boards 
-                    ~f:(fun (b, _) -> eval_board b ~curr_player:Black ~curr_depth:(0) ~limit:3)
+                    ~f:(fun (b, _) -> eval_board b ~curr_player:Black ~curr_depth:(0) ~limit:depth_limit)
                     in 
                     let (best_idx, _) = 
                         List.foldi next_board_scores 
