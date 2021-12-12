@@ -32,6 +32,9 @@ val is_blocked: board -> (int) -> int -> int -> int -> bool
 
 val get_possible_moves: board -> chess -> int -> int -> (int * int) list
 
+(* return all possible moves of the form (src, dst) of given player *)
+val get_all_possible_moves: board -> player -> ((int * int) * (int * int)) list
+
 val append_possible_moves_to_map: chess -> pos list list list -> (int * int) list -> pos list list list
 
 val get_next_step_map: board -> player -> pos list list list

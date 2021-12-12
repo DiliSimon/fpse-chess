@@ -8,6 +8,9 @@ type condition = Check | Checkmate | Fail of string | Normal [@@deriving equal]
 
 exception PosErr of string
 
+let board_fold (board: board) ~(init: 'b) ~(f: (int * int) -> 'b -> pos -> 'b) =
+    List.foldi board ~init:init ~f:(fun ridx accum1 col -> List.foldi col ~init:accum1 ~f:(fun cidx accum2 p -> f (ridx, cidx) accum2 p))
+
 let is_empty_pos (pos: pos) : bool =
     match pos with
     | Occupied(_) -> false
@@ -181,6 +184,16 @@ let get_possible_moves (board: board) (chess: chess) (ridx: int) (cidx: int) : (
 
     | Knight(player) -> [(ridx+2, cidx+1); (ridx+2,cidx-1); (ridx-2, cidx+1); (ridx-2,cidx-1);(ridx+1, cidx+2); (ridx+1,cidx-2); (ridx-1, cidx+2); (ridx-1,cidx-2)]
                     |> List.filter ~f:(fun idx -> match idx with | (next_r, next_c) -> is_valid_knight_move board player ridx cidx next_r next_c)
+
+let get_all_possible_moves (board: board) (curr_player: player) : ((int * int) * (int * int)) list =
+    board_fold board ~init:([]) ~f:(fun src accum pos -> 
+                                    match pos with
+                                    | Empty -> accum
+                                    | Occupied(piece)-> let (ridx, cidx) = src in
+                                                        if equal_player curr_player (get_player piece)
+                                                        then (List.map (get_possible_moves board piece ridx cidx) ~f:(fun dst -> (src, dst))) @ accum
+                                                        else accum
+                                    )
 
 let rec append_possible_moves_to_map (curr_piece: chess) (curr_map: pos list list list) (possible_moves: (int * int) list) : pos list list list =
     match possible_moves with
