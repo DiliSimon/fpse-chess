@@ -104,17 +104,19 @@ let command =
         ~doc:"initialize game"
       and instruction = flag "--move" (optional string)
         ~doc:"move piece"
+      and castling = flag "--castling" (optional string)
+        ~doc:"castling"
       and save = flag "--save" (optional string)
         ~doc:"saved name"
       and load = flag "--load" (optional string)
         ~doc:"game to load"
       in
       fun () ->
-        match (start, instruction, save, load) with
-        | (true, _, _, _) -> 
+        match (start, instruction, castling, save, load) with
+        | (true, _, _, _, _) -> 
           save_game (init_board ()) "cur_game";
           print_board (init_board ()) (!curr_player)
-        | (_, Some instruction, None, None) -> 
+        | (_, Some instruction, None, None, None) -> 
           let orig_1 = parse_move instruction 0 0 in
           let orig_2 = parse_move instruction 0 1 in
           let targ_1 = parse_move instruction 1 0 in
@@ -139,13 +141,30 @@ let command =
           | Checkmate ->
             print_result (!curr_player)
           | Fail(m) -> print_string m)
-        | (_, _, Some file, None) ->
+        | (_, _, Some side, None, None) ->
+          let cur_b = read_game "cur_game" in
+          let king_side = (match side with
+          | "king" -> true
+          | "queen" -> false
+          | _ -> failwith "bad instruction")
+          in
+          let res = Board.castling cur_b (!curr_player) king_side
+          in
+          (match res with
+          | Some b -> 
+            (match !curr_player with
+            | White -> curr_player:= Black
+            | Black -> curr_player:= White);
+            save_game b "cur_game";
+            print_board b (!curr_player)
+          | None -> print_string "invalid move")
+        | (_, _, _, Some file, None) ->
           save_game (read_game "cur_game") file;
           print_string @@ "game saved to " ^ file
-        | (_, _, None, Some file) ->
+        | (_, _, _, None, Some file) ->
           save_game (read_game file) "cur_game";
           print_board (read_game file) (!curr_player)
-        | (_,_,_,_) ->
+        | (_,_,_,_,_) ->
           print_string "bad instruction"
     )
     
