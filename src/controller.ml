@@ -119,7 +119,8 @@ let command =
           let orig_2 = parse_move instruction 0 1 in
           let targ_1 = parse_move instruction 1 0 in
           let targ_2 = parse_move instruction 1 1 in
-          let (new_b,res) = move (read_game "cur_game") (!curr_player) (orig_1,orig_2) (targ_1,targ_2)
+          let cur_b = read_game "cur_game" in 
+          let (new_b,res) = move cur_b (!curr_player) (orig_1,orig_2) (targ_1,targ_2)
           in
           (match res with
           | Normal -> 
