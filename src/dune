@@ -30,6 +30,7 @@
   (libraries
     board
     core
-    gui)
+    gui
+    bot)
     (preprocess (pps ppx_jane))
 ) 
