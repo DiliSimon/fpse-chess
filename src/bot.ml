@@ -20,7 +20,7 @@ sig
 end
 
 (* Basic evaluator that sums the value of all present chess pieces *)
-module BaseEval : Evaluator = 
+module BaseEval : (Evaluator)= 
 struct
     type value = Finite of int | Inf | NInf
 

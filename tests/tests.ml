@@ -2,6 +2,9 @@
 (* open Core;; *)
 open OUnit2;;
 open Board;;
+(* open Bot;; *)
+
+(* module BaseMinimaxBot = MinimaxBot(Bot.BaseEval);; *)
 
 let board_initial = init_board ();;
 let board_check = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
@@ -26,13 +29,20 @@ let board_castling = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty))))
           |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
 ;;
 
+let board_castling_empty_last = init_board ()
+  |> set_board_pos_exn ~idx:(7, 1) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(7, 2) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(7, 3) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(7, 5) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(7, 6) ~pos:(Empty)
+;;
+
 let board_castling_black_moved = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
           |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, true))))
           |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
           |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
           |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
 ;;
-
 
 let test_is_blocked _ =
   assert_equal (is_blocked board_initial 0 0 4 0) @@ true;
@@ -113,11 +123,27 @@ let test_castling _ =
           |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
           |> set_board_pos_exn ~idx:(0, 6) ~pos:(Occupied(King((White, true))))
           |> set_board_pos_exn ~idx:(0, 5) ~pos:(Occupied(Rook(White, true))));
+  assert_equal (castling board_castling_empty_last Black true) @@
+  Some (
+    init_board ()
+    |> set_board_pos_exn ~idx:(7, 1) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(7, 2) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(7, 3) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(7, 4) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(7, 5) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(7, 6) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(7, 7) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(7, 6) ~pos:(Occupied(King((Black, true))))
+    |> set_board_pos_exn ~idx:(7, 5) ~pos:(Occupied(Rook(Black, true))) 
+    );
   assert_equal (castling board_castling White false) @@ None;
   assert_equal (castling board_check White true) @@ None;
   assert_equal (castling board_initial White true) @@ None;
   (* black king still in inital position but have been moved *)
   assert_equal (castling board_castling_black_moved Black false) @@ None
+
+(* let test_eval_board _ =
+  assert_equal (BaseEval.eval board_initial Black) @@ 0 *)
 
 
 let section1_tests =
