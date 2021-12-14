@@ -10,15 +10,15 @@ let print_board (b:board) (p:player) =
       fun piece ->
       (match piece with
       | Empty -> " "
-      | Occupied(King(White)) -> "♔"
+      | Occupied(King(White,_)) -> "♔"
       | Occupied(Queen(White)) -> "♕"
-      | Occupied(Rook(White)) -> "♖"
+      | Occupied(Rook(White,_)) -> "♖"
       | Occupied(Bishop(White)) -> "♗"
       | Occupied(Knight(White)) -> "♘"
       | Occupied(Pawn(White)) -> "♙"
-      | Occupied(King(Black)) -> "♚"
+      | Occupied(King(Black,_)) -> "♚"
       | Occupied(Queen(Black)) -> "♛"
-      | Occupied(Rook(Black)) -> "♜"
+      | Occupied(Rook(Black,_)) -> "♜"
       | Occupied(Bishop(Black)) -> "♝"
       | Occupied(Knight(Black)) -> "♞"
       | Occupied(Pawn(Black)) -> "♟")

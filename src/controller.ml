@@ -20,15 +20,19 @@ let save_game (b:board) (g:string) =
       fun acc piece ->
       acc ^ (match piece with
       | Empty -> " "
-      | Occupied(King(White)) -> "k"
+      | Occupied(King(White,true)) -> "0"
+      | Occupied(King(White,false)) -> "1"
       | Occupied(Queen(White)) -> "q"
-      | Occupied(Rook(White)) -> "r"
+      | Occupied(Rook(White,true)) -> "2"
+      | Occupied(Rook(White,false)) -> "3"
       | Occupied(Bishop(White)) -> "b"
       | Occupied(Knight(White)) -> "n"
       | Occupied(Pawn(White)) -> "p"
-      | Occupied(King(Black)) -> "K"
+      | Occupied(King(Black,true)) -> "4"
+      | Occupied(King(Black,false)) -> "5"
       | Occupied(Queen(Black)) -> "Q"
-      | Occupied(Rook(Black)) -> "R"
+      | Occupied(Rook(Black,true)) -> "6"
+      | Occupied(Rook(Black,false)) -> "7"
       | Occupied(Bishop(Black)) -> "B"
       | Occupied(Knight(Black)) -> "N"
       | Occupied(Pawn(Black)) -> "P")
@@ -63,15 +67,19 @@ let read_game (g:string) : board=
         fun acc c ->
           acc @ [
             match c with
-            | 'k' -> Occupied(King(White))
+            | '0' -> Occupied(King(White,true))
+            | '1' -> Occupied(King(White,false))
             | 'q' -> Occupied(Queen(White))
-            | 'r' -> Occupied(Rook(White))
+            | '2' -> Occupied(Rook(White,true))
+            | '3' -> Occupied(Rook(White,false))
             | 'b' -> Occupied(Bishop(White))
             | 'n' -> Occupied(Knight(White))
             | 'p' -> Occupied(Pawn(White))
-            | 'K' -> Occupied(King(Black))
+            | '4' -> Occupied(King(Black,true))
+            | '5' -> Occupied(King(Black,false))
             | 'Q' -> Occupied(Queen(Black))
-            | 'R' -> Occupied(Rook(Black))
+            | '6' -> Occupied(Rook(Black,true))
+            | '7' -> Occupied(Rook(Black,false))
             | 'B' -> Occupied(Bishop(Black))
             | 'N' -> Occupied(Knight(Black))
             | 'P' -> Occupied(Pawn(Black))
