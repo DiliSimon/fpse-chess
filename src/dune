@@ -7,21 +7,10 @@
 )
 
 (library
-  (name gui)
-  (modules gui)
+  (name bot)
+  (modules bot)
   (libraries 
     core
     board)
   (preprocess (pps bisect_ppx ppx_jane))
 )
-
-
-(executable
-  (name controller)
-  (modules controller)
-  (libraries
-    board
-    core
-    gui)
-    (preprocess (pps ppx_jane))
-  )
