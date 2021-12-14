@@ -299,7 +299,7 @@ let castling (board: board) (curr_player: player) (is_kingside: bool) : board op
                         | _, _ -> None
                         )
     | White, false  ->  (match (get_board_pos_exn board (0, 4)), (get_board_pos_exn board (0, 0)) with
-                        | Occupied(King(Black, false)), Occupied(Rook(Black, false)) -> (if (is_valid_rook_move board 0 0 0 3) 
+                        | Occupied(King(White, false)), Occupied(Rook(White, false)) -> (if (is_valid_rook_move board 0 0 0 3) 
                                                                                         then Some(set_board_pos_exn board ~idx:(0, 0) ~pos:Empty 
                                                                                                     |> set_board_pos_exn ~idx:(0, 4) ~pos:Empty
                                                                                                     |> set_board_pos_exn ~idx:(0, 3) ~pos:(Occupied(Rook(White, true)))
