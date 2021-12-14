@@ -231,13 +231,29 @@ let is_check (board: board) (curr_player: player) : bool =
     let next_step_map = get_next_step_map board curr_player in
     let king_pos = find_king board (opponent_of curr_player) in
     List.length (match get_board_pos next_step_map king_pos with 
-                    | Some(l) -> l 
-                    | None -> raise (PosErr "fail to extract from step map")) 
-                    > 0
+                | Some(l) -> l 
+                | None -> raise (PosErr "fail to extract from step map")) 
+                > 0
 
-(* TODO: perform all possible moves and see if still checked *)
-let is_checkmate (_: board) (_: player) : bool =
-    false
+(* simply set position t to position f, then set f to empty *)
+let move_pure (board: board) (f: int * int) (t: (int * int)) : board option = 
+    match set_board_pos board t (get_board_pos_exn board f) with
+    | Some(nb) -> 
+                (match set_board_pos nb f Empty with
+                | Some(nb1) ->  Some(nb1)
+                | None -> None)
+    | None -> None
+
+(* verify whether curr_player has checkmated his opponent*)
+let is_checkmate (board: board) (curr_player: player) : bool =
+    let all_moves = get_all_possible_moves board (opponent_of curr_player) in
+    let next_boards = List.map all_moves ~f:(fun (f, t) -> move_pure board f t) in
+    not(List.exists next_boards 
+    ~f:(fun wrap -> match wrap with
+                    | Some(next_board) -> not (is_check next_board curr_player)
+                    | None -> false
+                    )
+    )
 
 let get_condition (board: board) (curr_player: player) : condition =
     if is_check board curr_player then
@@ -270,7 +286,7 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
     | Some(Occupied(curr_chess)) -> 
                     (
                     let (rt, _) = t in
-                    (* Pawn Promotion. TODO: allow choosing piece type promoted to*)
+                    (* Pawn Promotion *)
                     let next_pos = 
                         (if not (((equal_chess curr_chess (Pawn(White))) || (equal_chess curr_chess (Pawn(Black)))) && (rt = 0 || rt = 7)) 
                         then (match curr_chess with | King(p, _) -> Occupied(King(p, true)) | Rook(p, _) -> Occupied(Rook(p, true)) | _ -> Occupied(curr_chess))
@@ -280,7 +296,7 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
                     | Some(nb) ->   (match set_board_pos nb f Empty with
                                     | Some(nb1) ->  if (is_check nb1 (opponent_of curr_player)) 
                                                     then (board, Fail("still checked after move")) 
-                                                    else (nb1, Normal)
+                                                    else if is_checkmate nb1 curr_player then (nb1, Checkmate) else (nb1, Normal)
                                     | None -> (board, Fail("fail to set piece")))
                     | None -> (board, Fail("fail to set piece"))
                     )

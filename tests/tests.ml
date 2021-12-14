@@ -7,19 +7,32 @@ open Board;;
 (* module BaseMinimaxBot = MinimaxBot(Bot.BaseEval);; *)
 
 let board_initial = init_board ();;
-let board_check = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
-          |> set_board_pos_exn ~idx:(2, 5) ~pos:(Occupied(King((White, true))))
-          |> set_board_pos_exn ~idx:(2, 6) ~pos:(Occupied(Bishop(White))) 
-          |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King((Black, true))))
-          |> set_board_pos_exn ~idx:(5, 5) ~pos:(Occupied(Bishop(Black)))
-          |> set_board_pos_exn ~idx:(4, 7) ~pos:(Occupied(Knight(Black)))
+let board_check = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(2, 5) ~pos:(Occupied(King((White, true))))
+  |> set_board_pos_exn ~idx:(2, 6) ~pos:(Occupied(Bishop(White))) 
+  |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King((Black, true))))
+  |> set_board_pos_exn ~idx:(5, 5) ~pos:(Occupied(Bishop(Black)))
+  |> set_board_pos_exn ~idx:(4, 7) ~pos:(Occupied(Knight(Black)))
 ;;
 
-let board_check_2 = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty))))
+let board_check_2 = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty))))
   |> set_board_pos_exn ~idx:(7, 5) ~pos:(Occupied(King(White, true)))
   |> set_board_pos_exn ~idx:(5, 3) ~pos:(Occupied(King(Black, true)))
   |> set_board_pos_exn ~idx:(1, 1) ~pos:(Occupied(Rook(Black, true)))
   |> set_board_pos_exn ~idx:(1, 2) ~pos:(Occupied(Queen(Black)))
+;;
+
+let board_checkmate = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, false))))
+  |> set_board_pos_exn ~idx:(4, 7) ~pos:(Occupied(Rook(Black, true))) 
+  |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Queen((Black))))
+  |> set_board_pos_exn ~idx:(1, 5) ~pos:(Occupied(Pawn(White)))
+  |> set_board_pos_exn ~idx:(1, 6) ~pos:(Occupied(Pawn(White)))
+  |> set_board_pos_exn ~idx:(0, 5) ~pos:(Occupied(Rook(White, true)))
+  |> set_board_pos_exn ~idx:(0, 6) ~pos:(Occupied(King(White, true)))
 ;;
 
 let board_castling = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
@@ -35,13 +48,19 @@ let board_castling_empty_last = init_board ()
   |> set_board_pos_exn ~idx:(7, 3) ~pos:(Empty)
   |> set_board_pos_exn ~idx:(7, 5) ~pos:(Empty)
   |> set_board_pos_exn ~idx:(7, 6) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(0, 1) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(0, 2) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(0, 3) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(0, 5) ~pos:(Empty)
+  |> set_board_pos_exn ~idx:(0, 6) ~pos:(Empty)
 ;;
 
-let board_castling_black_moved = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
-          |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, true))))
-          |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
-          |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
-          |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
+let board_castling_black_moved = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, true))))
+  |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
+  |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
+  |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
 ;;
 
 let test_is_blocked _ =
@@ -84,6 +103,7 @@ let test_is_check _ =
   assert_bool "White is checked" (is_check board_check White);
   assert_bool "Black is not checked" (not (is_check board_check Black))
 
+(* TODO: check move with checkmate *)
 let test_move _ =
   (*  normal move *)
   assert_equal (move board_check White (2, 6) (4, 4)) 
@@ -94,9 +114,6 @@ let test_move _ =
   (*  normal move *)
   assert_equal (move board_check_2 Black (1, 2) (0, 2)) 
   @@ ((set_board_pos_exn board_check_2 ~idx:(0, 2) ~pos:(Occupied(Queen(Black))) |> set_board_pos_exn ~idx:(1, 2) ~pos:Empty), Normal); 
-  (* normal move *)
-  assert_equal (move board_check White (2, 6) (5, 3)) 
-  @@ ((set_board_pos_exn board_check ~idx:(5, 3) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Normal);
   (* invalid move blocked by other pieces *)
   assert_equal (move board_check White (2, 6) (6, 2)) 
   @@ (board_check, Fail("invalid move"));
@@ -125,16 +142,19 @@ let test_castling _ =
           |> set_board_pos_exn ~idx:(0, 5) ~pos:(Occupied(Rook(White, true))));
   assert_equal (castling board_castling_empty_last Black true) @@
   Some (
-    init_board ()
-    |> set_board_pos_exn ~idx:(7, 1) ~pos:(Empty)
-    |> set_board_pos_exn ~idx:(7, 2) ~pos:(Empty)
-    |> set_board_pos_exn ~idx:(7, 3) ~pos:(Empty)
+    board_castling_empty_last
     |> set_board_pos_exn ~idx:(7, 4) ~pos:(Empty)
-    |> set_board_pos_exn ~idx:(7, 5) ~pos:(Empty)
-    |> set_board_pos_exn ~idx:(7, 6) ~pos:(Empty)
     |> set_board_pos_exn ~idx:(7, 7) ~pos:(Empty)
     |> set_board_pos_exn ~idx:(7, 6) ~pos:(Occupied(King((Black, true))))
     |> set_board_pos_exn ~idx:(7, 5) ~pos:(Occupied(Rook(Black, true))) 
+    );
+  assert_equal (castling board_castling_empty_last White false) @@
+  Some (
+    board_castling_empty_last
+    |> set_board_pos_exn ~idx:(0, 0) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(0, 4) ~pos:(Empty)
+    |> set_board_pos_exn ~idx:(0, 2) ~pos:(Occupied(King((White, true))))
+    |> set_board_pos_exn ~idx:(0, 3) ~pos:(Occupied(Rook(White, true))) 
     );
   assert_equal (castling board_castling White false) @@ None;
   assert_equal (castling board_check White true) @@ None;
@@ -145,6 +165,11 @@ let test_castling _ =
 (* let test_eval_board _ =
   assert_equal (BaseEval.eval board_initial Black) @@ 0 *)
 
+(* test get_all_possible_moves *)
+
+(* test checkmate *)
+let test_checkmate _ =
+  assert_bool "White should be checkmated" (is_checkmate board_checkmate Black);;
 
 let section1_tests =
   "Section 1" >: test_list [

@@ -75,7 +75,7 @@ struct
         else if is_checkmate board White then Eval.max_value
         else if curr_depth >= limit then (Eval.eval board curr_player)
         else
-        let all_moves: ((int * int) * (int * int)) list = get_all_possible_moves board curr_player in
+        let all_moves = get_all_possible_moves board curr_player in
         let next_boards = List.map all_moves ~f:(fun (f, t) -> move board curr_player f t) in
         match curr_player with
         (* Black is maximizing player *)
