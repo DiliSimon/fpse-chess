@@ -117,35 +117,41 @@ struct
         match curr_player with
         | Black -> 
                 let next_board_scores = 
-                List.filter next_boards ~f:(fun (_, c) -> 
+                List.zip_exn all_moves next_boards 
+                |> List.filter ~f:(fun (_, (_, c)) -> 
                     match c with
                     | Fail(_) -> false
                     | _ -> true)
-                |> List.map ~f:(fun (b, _) -> eval_board b ~curr_player:White ~curr_depth:(0) ~limit:depth_limit)
+                |> List.map ~f:(fun (p, (b, _)) -> (p, eval_board b ~curr_player:White ~curr_depth:(0) ~limit:depth_limit))
                 in
-                let (best_idx, _) = 
-                    List.foldi next_board_scores 
-                    ~init:((-1), Eval.min_value) 
-                    ~f:(fun idx (best_idx, curr_max) curr_value -> 
-                        if Eval.compare curr_value curr_max > 0 
-                        then (idx, curr_value) 
-                        else (best_idx, curr_max))
-                in Some(List.nth_exn all_moves best_idx)
+                if List.length next_board_scores = 0 
+                then None 
+                else
+                let (p, _) = 
+                List.fold next_board_scores ~init:(((-1, -1), (-1, -1)), Eval.min_value) 
+                ~f:(fun (best_pair, curr_max) (curr_pair, curr_value) -> 
+                    if Eval.compare curr_value curr_max > 0
+                    then (curr_pair, curr_value)
+                    else (best_pair, curr_max))
+                in Some(p)
         | White -> 
                 let next_board_scores = 
-                List.filter next_boards ~f:(fun (_, c) -> 
+                List.zip_exn all_moves next_boards 
+                |> List.filter ~f:(fun (_, (_, c)) -> 
                     match c with
                     | Fail(_) -> false
                     | _ -> true)
-                |> List.map ~f:(fun (b, _) -> eval_board b ~curr_player:Black ~curr_depth:(0) ~limit:depth_limit)
+                |> List.map ~f:(fun (p, (b, _)) -> (p, eval_board b ~curr_player:Black ~curr_depth:(0) ~limit:depth_limit))
                 in
-                let (best_idx, _) = 
-                    List.foldi next_board_scores 
-                    ~init:((-1), Eval.max_value) 
-                    ~f:(fun idx (best_idx, curr_min) curr_value -> 
-                        if Eval.compare curr_value curr_min < 0 
-                        then (idx, curr_value) 
-                        else (best_idx, curr_min))
-                in Some(List.nth_exn all_moves best_idx)
+                if List.length next_board_scores = 0 
+                then None 
+                else
+                let (p, _) = 
+                List.fold next_board_scores ~init:(((-1, -1), (-1, -1)), Eval.min_value) 
+                ~f:(fun (best_pair, curr_min) (curr_pair, curr_value) -> 
+                    if Eval.compare curr_value curr_min < 0
+                    then (curr_pair, curr_value)
+                    else (best_pair, curr_min))
+                in Some(p)
 
 end
