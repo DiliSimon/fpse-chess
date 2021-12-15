@@ -51,7 +51,7 @@ struct
         in
         let curr_check = 
             (if is_check board curr_player 
-            then (match curr_player with | Black -> 100 | White -> -100) 
+            then (match curr_player with | Black -> 200 | White -> -200) 
             else 0) 
         in
         let curr_checkmate = 

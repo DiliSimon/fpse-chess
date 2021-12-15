@@ -35,6 +35,18 @@ let board_checkmate =
   |> set_board_pos_exn ~idx:(0, 6) ~pos:(Occupied(King(White, true)))
 ;;
 
+let board_checkmate_one_step = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, false))))
+  |> set_board_pos_exn ~idx:(4, 7) ~pos:(Occupied(Rook(Black, true))) 
+  (* Black move queen to (0, 7) to checkmate *)
+  |> set_board_pos_exn ~idx:(2, 7) ~pos:(Occupied(Queen((Black))))
+  |> set_board_pos_exn ~idx:(1, 5) ~pos:(Occupied(Pawn(White)))
+  |> set_board_pos_exn ~idx:(1, 6) ~pos:(Occupied(Pawn(White)))
+  |> set_board_pos_exn ~idx:(0, 5) ~pos:(Occupied(Rook(White, true)))
+  |> set_board_pos_exn ~idx:(0, 6) ~pos:(Occupied(King(White, true)))
+;;
+
 let board_castling = 
   (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
   |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, false))))
@@ -80,6 +92,15 @@ let board_check_3 =
   |> set_board_pos_exn ~idx:(5, 0) ~pos:(Occupied(Pawn((Black))))
   |> set_board_pos_exn ~idx:(3, 7) ~pos:(Occupied(Pawn((White))))
 
+let board_wo_white_king = 
+  init_board ()
+  |> set_board_pos_exn ~idx:(0, 4) ~pos:(Empty)
+
+let board_pawn_promotion =
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 3) ~pos:(Occupied(King((Black, false))))
+  |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, true))))
+  |> set_board_pos_exn ~idx:(6, 6) ~pos:(Occupied(Pawn((White))))
 
 let test_is_blocked _ =
   assert_equal (is_blocked board_initial 0 0 4 0) @@ true;
@@ -89,7 +110,9 @@ let test_is_blocked _ =
   (* path blocked by piece of oneself *)
   assert_equal (is_blocked board_initial 0 0 1 0) @@ true;
   (* path blocked by piece of other opponent *)
-  assert_equal (is_blocked board_initial 1 0 7 0) @@ true
+  assert_equal (is_blocked board_initial 1 0 7 0) @@ true;
+  assert_raises (PosErr "position doesn't contain piece") (fun () -> is_blocked board_check_3 3 0 7 0);
+  assert_raises (PosErr "invalid pos") (fun () -> is_blocked board_check_3 9 0 7 0)
 
 let test_find_king _ =
   assert_equal (find_king board_initial White) @@ (0, 4);
@@ -119,13 +142,14 @@ let test_get_next_step_map _ =
 
 let test_is_check _ =
   assert_bool "White is checked" (is_check board_check White);
-  assert_bool "Black is not checked" (not (is_check board_check Black))
+  assert_bool "Black is not checked" (not (is_check board_check Black));
+  assert_bool "White is checked" (is_check board_check_3 Black);
+  assert_raises (PosErr "fail to extract from step map") (fun () -> is_check board_wo_white_king Black)
 
-(* TODO: check move with checkmate *)
 let test_move _ =
   (*  normal move *)
   assert_equal (move board_check White (2, 6) (4, 4)) 
-  @@ ((set_board_pos_exn board_check ~idx:(4, 4) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Normal);
+  @@ ((set_board_pos_exn board_check ~idx:(4, 4) ~pos:(Occupied(Bishop(White))) |> set_board_pos_exn ~idx:(2, 6) ~pos:Empty), Check);
   (*  normal move *)
   assert_equal (move board_check_2 Black (1, 1) (0, 1))
   @@ ((set_board_pos_exn board_check_2 ~idx:(0, 1) ~pos:(Occupied(Rook(Black, true))) |> set_board_pos_exn ~idx:(1, 1) ~pos:Empty), Normal);
@@ -143,7 +167,19 @@ let test_move _ =
   @@ (board_check, Fail("still checked after move"));
   (* Black knight captures white bishop *)
   assert_equal (move board_check Black (4, 7) (2, 6)) 
-  @@ ((set_board_pos_exn board_check ~idx:(2, 6) ~pos:(Occupied(Knight(Black))) |> set_board_pos_exn ~idx:(4, 7) ~pos:Empty), Normal)
+  @@ ((set_board_pos_exn board_check ~idx:(2, 6) ~pos:(Occupied(Knight(Black))) |> set_board_pos_exn ~idx:(4, 7) ~pos:Empty), Normal);
+  (* Black checkmates white *)
+  assert_equal (move board_checkmate_one_step Black (2, 7) (0, 7))
+  @@ (board_checkmate, Checkmate);
+  (* Pawn Promotion *)
+  assert_equal (move board_pawn_promotion White (6, 6) (7, 6))
+  @@ ((board_pawn_promotion |> set_board_pos_exn ~idx:(6, 6) ~pos:Empty |> set_board_pos_exn ~idx:(7, 6) ~pos:(Occupied(Queen(White)))), Check)
+
+let test_validate _ =
+  assert_equal (validate board_check White (9, 2) (1, 3)) @@ false;
+  assert_equal (validate board_check White (3, 2) (-1, 3)) @@ false;
+  assert_equal (validate board_check White (3, 2) (1, 3)) @@ false;
+  assert_equal (validate board_check White (2, 6) (3, 5)) @@ true
 
 let test_castling _ =
   assert_equal (castling board_castling Black false) @@
@@ -180,18 +216,26 @@ let test_castling _ =
   (* black king still in inital position but have been moved *)
   assert_equal (castling board_castling_black_moved Black false) @@ None
 
-(* let test_eval_board _ =
-  assert_equal (BaseEval.eval board_initial Black) @@ 0 *)
+let test_eval_board _ =
+  assert_equal (BaseEval.compare (BaseEval.eval board_initial Black) (BaseEval.eval board_initial White)) @@ 0;
+  assert_bool "Black has more pieces" ((BaseEval.compare (BaseEval.eval board_check Black) (BaseEval.eval board_check White)) > 0);
+  assert_bool "Black has queen & check" ((BaseEval.compare (BaseEval.eval board_check_3 Black) (BaseEval.eval board_check_3 White)) > 0)
 
-(* test get_all_possible_moves *)
-
-(* test checkmate *)
 let test_checkmate _ =
-  assert_bool "White should be checkmated" (is_checkmate board_checkmate Black);;
+  assert_bool "White should be checkmated" (is_checkmate board_checkmate Black);
+  assert_bool "White is not checkmated" (not(is_checkmate board_checkmate_one_step Black));
+  assert_bool "Black not checkmated" (not (is_checkmate board_check_3 White))
 
 let test_get_best_move _ =
-  assert_equal (BaseMinimaxBot.get_best_move board_check_3 White) @@ None
+  assert_equal (BaseMinimaxBot.get_best_move board_check_3 White) @@ Some((0, 4),(0, 5));
+  assert_equal (BaseMinimaxBot.get_best_move board_check_2 Black) @@ Some((5, 3), (6, 3));
+  assert_equal (BaseMinimaxBot.get_best_move board_check_2 White) @@ Some((7, 5), (6, 5))
 
+let test_misc _ =
+  assert_bool "" (equal_player Black Black);
+  assert_bool "" (not(equal_player White Black));
+  assert_bool "" (equal_board board_initial board_initial);
+  assert_bool "" (equal_chess (Knight(Black)) (Knight(Black)))
 
 let section1_tests =
   "Section 1" >: test_list [
@@ -203,7 +247,10 @@ let section1_tests =
     "test_move" >:: test_move;
     "test_castling" >:: test_castling;
     "test_checkmate" >:: test_checkmate;
-    "test_get_best_move" >:: test_get_best_move
+    "test_get_best_move" >:: test_get_best_move;
+    "test_eval_board" >:: test_eval_board;
+    "test_validate" >:: test_validate;
+    "test_misc" >:: test_misc
   ]
 
 let series =

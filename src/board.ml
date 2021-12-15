@@ -4,7 +4,7 @@ type player = White | Black [@@deriving equal]
 type chess = King of (player * bool) | Queen of player | Rook of (player * bool) | Bishop of player | Knight of player | Pawn of player [@@deriving equal]
 type pos = Occupied of chess | Empty [@@deriving equal]
 type board = pos list list [@@deriving equal]
-type condition = Check | Checkmate | Fail of string | Normal [@@deriving equal]
+type condition = Check | Checkmate | Fail of string | Normal
 
 exception PosErr of string
 
@@ -116,7 +116,8 @@ let is_valid_pawn_move (board: board) (curr_player: player) (ridx: int) (cidx: i
     if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
     let next_pos = get_board_pos_exn board (next_r, next_c) in
     if cidx = next_c then 
-        is_empty_pos next_pos && (((abs (ridx - next_r)) = 1) || (((abs (ridx - next_r)) = 1) && (is_empty_pos (get_board_pos_exn board (next_r - (if next_r > ridx then 1 else (-1)), next_c)))))
+        is_empty_pos next_pos && (((abs (ridx - next_r)) = 1) || (((abs (ridx - next_r)) = 2) && (is_empty_pos (get_board_pos_exn board (next_r - (if next_r > ridx then 1 else (-1)), next_c)))))
+    else if not (((abs (ridx - next_r)) = 1) && ((abs (cidx - next_c)) = 1)) then false
     else if is_empty_pos next_pos then false
     else not (equal_player (get_player_from_pos next_pos) curr_player)
 
@@ -255,12 +256,6 @@ let is_checkmate (board: board) (curr_player: player) : bool =
                     )
     )
 
-let get_condition (board: board) (curr_player: player) : condition =
-    if is_check board curr_player then
-        if is_checkmate board curr_player then Checkmate
-        else Check
-    else Normal
-
 let validate (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : bool =
     match f, t with
     | (rf, cf), (rt, ct) -> if rf = rt && cf = ct then false
@@ -296,7 +291,9 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
                     | Some(nb) ->   (match set_board_pos nb f Empty with
                                     | Some(nb1) ->  if (is_check nb1 (opponent_of curr_player)) 
                                                     then (board, Fail("still checked after move")) 
-                                                    else if is_checkmate nb1 curr_player then (nb1, Checkmate) else (nb1, Normal)
+                                                    else if is_checkmate nb1 curr_player then (nb1, Checkmate)
+                                                    else if is_check nb1 curr_player then (nb1, Check)
+                                                    else (nb1, Normal)
                                     | None -> (board, Fail("fail to set piece")))
                     | None -> (board, Fail("fail to set piece"))
                     )
