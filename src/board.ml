@@ -659,8 +659,16 @@ let move (board: board) (curr_player: player) (f: int * int) (t: (int * int)) : 
       (board, Fail("fail to get piece"))
 
 let castling (board: board) (curr_player: player) (is_kingside: bool) : board option =
+  let next_step_map = get_next_step_map board (opponent_of curr_player)
+  in
   match curr_player, is_kingside with
   | Black, false  ->  
+    if 
+      (is_check board (opponent_of curr_player))
+      || not(List.length (get_board_pos_exn next_step_map (7, 3)) = 0)
+      || not(List.length (get_board_pos_exn next_step_map (7, 2)) = 0)
+    then None
+    else
     (match (get_board_pos_exn board (7, 4)), (get_board_pos_exn board (7, 0)) with
      | Occupied(King(Black, false)), Occupied(Rook(Black, false)) -> 
        (if (is_valid_rook_move board 7 0 7 3) then 
@@ -677,6 +685,12 @@ let castling (board: board) (curr_player: player) (is_kingside: bool) : board op
        None
     )
   | White, false  ->  
+    if 
+      (is_check board (opponent_of curr_player))
+      || not(List.length (get_board_pos_exn next_step_map (0, 3)) = 0)
+      || not(List.length (get_board_pos_exn next_step_map (0, 2)) = 0)
+    then None
+    else
     (match (get_board_pos_exn board (0, 4)), (get_board_pos_exn board (0, 0)) with
      | Occupied(King(White, false)), Occupied(Rook(White, false)) -> 
        (if (is_valid_rook_move board 0 0 0 3) then 
@@ -693,6 +707,12 @@ let castling (board: board) (curr_player: player) (is_kingside: bool) : board op
        None
     )
   | Black, true  ->  
+    if 
+      (is_check board (opponent_of curr_player))
+      || not(List.length (get_board_pos_exn next_step_map (7, 5)) = 0)
+      || not(List.length (get_board_pos_exn next_step_map (7, 6)) = 0)
+    then None
+    else
     (match (get_board_pos_exn board (7, 4)), (get_board_pos_exn board (7, 7)) with
      | Occupied(King(Black, false)), Occupied(Rook(Black, false)) -> 
        (if (is_valid_rook_move board 7 7 7 5) then 
@@ -709,6 +729,12 @@ let castling (board: board) (curr_player: player) (is_kingside: bool) : board op
        None
     )
   | White, true  ->  
+    if 
+      (is_check board (opponent_of curr_player))
+      || not(List.length (get_board_pos_exn next_step_map (0, 5)) = 0)
+      || not(List.length (get_board_pos_exn next_step_map (0, 6)) = 0)
+    then None
+    else
     (match (get_board_pos_exn board (0, 4)), (get_board_pos_exn board (0, 7)) with
      | Occupied(King(White, false)), Occupied(Rook(White, false)) -> 
        (if (is_valid_rook_move board 0 7 0 5) then 

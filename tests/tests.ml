@@ -56,6 +56,24 @@ let board_castling =
   |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
 ;;
 
+let board_castling_black_under_attack = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, false))))
+  |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
+  |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
+  |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
+  |> set_board_pos_exn ~idx:(6, 4) ~pos:(Occupied(Bishop(White)))
+;;
+
+let board_castling_black_under_attack_2 = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, false))))
+  |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
+  |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
+  |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
+  |> set_board_pos_exn ~idx:(6, 4) ~pos:(Occupied(Rook(White, true)))
+;;
+
 let board_castling_empty_last = init_board ()
   |> set_board_pos_exn ~idx:(7, 1) ~pos:(Empty)
   |> set_board_pos_exn ~idx:(7, 2) ~pos:(Empty)
@@ -215,7 +233,12 @@ let test_castling _ =
   assert_equal (castling board_check White true) @@ None;
   assert_equal (castling board_initial White true) @@ None;
   (* black king still in inital position but have been moved *)
-  assert_equal (castling board_castling_black_moved Black false) @@ None
+  assert_equal (castling board_castling_black_moved Black false) @@ None;
+  (* black king will pass a position attackable by white Bishop *)
+  assert_equal (castling board_castling_black_under_attack Black false) @@ None;
+  assert_equal (castling board_castling_black_under_attack Black true) @@ None;
+  (* Black king checked *)
+  assert_equal (castling board_castling_black_under_attack_2 Black true) @@ None
 
 let test_eval_board _ =
   assert_equal (BaseEval.compare (BaseEval.eval board_initial Black) (BaseEval.eval board_initial White)) @@ 0;
