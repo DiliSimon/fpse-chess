@@ -116,7 +116,7 @@ let is_valid_pawn_move (board: board) (curr_player: player) (ridx: int) (cidx: i
     if next_r < 0 || next_r > 7 || next_c < 0 || next_c > 7 then false else
     let next_pos = get_board_pos_exn board (next_r, next_c) in
     if cidx = next_c then 
-        is_empty_pos next_pos && (((abs (ridx - next_r)) = 1) || (is_empty_pos (get_board_pos_exn board (next_r - (if next_r > ridx then 1 else (-1)), next_c))))
+        is_empty_pos next_pos && (((abs (ridx - next_r)) = 1) || (((abs (ridx - next_r)) = 1) && (is_empty_pos (get_board_pos_exn board (next_r - (if next_r > ridx then 1 else (-1)), next_c)))))
     else if is_empty_pos next_pos then false
     else not (equal_player (get_player_from_pos next_pos) curr_player)
 

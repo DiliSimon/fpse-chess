@@ -2,9 +2,9 @@
 (* open Core;; *)
 open OUnit2;;
 open Board;;
-(* open Bot;; *)
+open Bot;;
 
-(* module BaseMinimaxBot = MinimaxBot(Bot.BaseEval);; *)
+module BaseMinimaxBot = MinimaxBot(Bot.BaseEval);;
 
 let board_initial = init_board ();;
 let board_check = 
@@ -35,11 +35,12 @@ let board_checkmate =
   |> set_board_pos_exn ~idx:(0, 6) ~pos:(Occupied(King(White, true)))
 ;;
 
-let board_castling = (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
-          |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, false))))
-          |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
-          |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
-          |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
+let board_castling = 
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(King((Black, false))))
+  |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
+  |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
+  |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
 ;;
 
 let board_castling_empty_last = init_board ()
@@ -62,6 +63,23 @@ let board_castling_black_moved =
   |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, false))))
   |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook(White, false)))
 ;;
+
+let board_check_3 =
+  (List.init 8 (fun _ -> (List.init 8 (fun _ -> Empty)))) 
+  |> set_board_pos_exn ~idx:(7, 0) ~pos:(Occupied(Rook(Black, false))) 
+  |> set_board_pos_exn ~idx:(7, 1) ~pos:(Occupied(Knight((Black))))
+  |> set_board_pos_exn ~idx:(7, 2) ~pos:(Occupied(Bishop((Black))))
+  |> set_board_pos_exn ~idx:(7, 3) ~pos:(Occupied(King((Black, false))))
+  |> set_board_pos_exn ~idx:(7, 4) ~pos:(Occupied(Queen((Black))))
+  |> set_board_pos_exn ~idx:(0, 0) ~pos:(Occupied(Rook(White, false))) 
+  |> set_board_pos_exn ~idx:(0, 1) ~pos:(Occupied(Knight((White))))
+  |> set_board_pos_exn ~idx:(0, 2) ~pos:(Occupied(Bishop((White))))
+  |> set_board_pos_exn ~idx:(0, 4) ~pos:(Occupied(King((White, true))))
+  |> set_board_pos_exn ~idx:(0, 6) ~pos:(Occupied(Knight((White))))
+  |> set_board_pos_exn ~idx:(0, 7) ~pos:(Occupied(Rook((White, false))))
+  |> set_board_pos_exn ~idx:(5, 0) ~pos:(Occupied(Pawn((Black))))
+  |> set_board_pos_exn ~idx:(3, 7) ~pos:(Occupied(Pawn((White))))
+
 
 let test_is_blocked _ =
   assert_equal (is_blocked board_initial 0 0 4 0) @@ true;
@@ -171,6 +189,10 @@ let test_castling _ =
 let test_checkmate _ =
   assert_bool "White should be checkmated" (is_checkmate board_checkmate Black);;
 
+let test_get_best_move _ =
+  assert_equal (BaseMinimaxBot.get_best_move board_check_3 White) @@ None
+
+
 let section1_tests =
   "Section 1" >: test_list [
     "test_is_unblocked" >:: test_is_blocked;
@@ -179,7 +201,9 @@ let section1_tests =
     "test_get_next_step_map" >:: test_get_next_step_map;
     "test_is_check" >:: test_is_check;
     "test_move" >:: test_move;
-    "test_castling" >:: test_castling
+    "test_castling" >:: test_castling;
+    "test_checkmate" >:: test_checkmate;
+    "test_get_best_move" >:: test_get_best_move
   ]
 
 let series =

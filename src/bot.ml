@@ -68,7 +68,7 @@ module MinimaxBot (Eval: Evaluator): Bot with type move = (int * int) * (int * i
 struct
     type move = (int * int) * (int * int)
 
-    let depth_limit = 3
+    let depth_limit = 1
     
     let rec eval_board (board: board) ~(curr_player: player) ~(curr_depth: int) ~(limit: int) : (Eval.value) =
         if is_checkmate board Black then Eval.min_value
@@ -110,7 +110,10 @@ struct
         3. get score for each board after move
         4. pick move with best score
         *)
-        let all_moves: ((int * int) * (int * int)) list = get_all_possible_moves board curr_player in
+        let (kx, ky) = find_king board (opponent_of curr_player) in
+        let all_moves = 
+            get_all_possible_moves board curr_player 
+            |> List.filter ~f:(fun (_, (dx, dy)) -> not (dx = kx && dy = ky)) in
         let next_boards = List.map all_moves ~f:(fun (f, t) -> move board curr_player f t) in
         if List.length next_boards = 0 then None
         else
@@ -147,7 +150,7 @@ struct
                 then None 
                 else
                 let (p, _) = 
-                List.fold next_board_scores ~init:(((-1, -1), (-1, -1)), Eval.min_value) 
+                List.fold next_board_scores ~init:(((-1, -1), (-1, -1)), Eval.max_value) 
                 ~f:(fun (best_pair, curr_min) (curr_pair, curr_value) -> 
                     if Eval.compare curr_value curr_min < 0
                     then (curr_pair, curr_value)
