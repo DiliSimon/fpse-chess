@@ -3,6 +3,7 @@
 open OUnit2;;
 open Board;;
 open Bot;;
+open Gui;;
 
 module BaseMinimaxBot = MinimaxBot(Bot.BaseEval);;
 
@@ -237,8 +238,16 @@ let test_misc _ =
   assert_bool "" (equal_board board_initial board_initial);
   assert_bool "" (equal_chess (Knight(Black)) (Knight(Black)))
 
-let section1_tests =
-  "Section 1" >: test_list [
+let test_print_board _ = 
+  let b_1 = [[Occupied(Bishop(White));Occupied(Knight(Black))];[Empty;Occupied(Pawn(White))]]
+  in 
+  assert_equal (print_board b_1 White) ()
+
+let test_print_result _ =
+  assert_equal (print_result White) ()
+
+let board_tests =
+  "Board test" >: test_list [
     "test_is_unblocked" >:: test_is_blocked;
     "test_find_king" >:: test_find_king;
     "test_get_possible_moves" >:: test_get_possible_moves;
@@ -247,15 +256,27 @@ let section1_tests =
     "test_move" >:: test_move;
     "test_castling" >:: test_castling;
     "test_checkmate" >:: test_checkmate;
+  ]
+
+let bot_tests = 
+  "Bot test" >: test_list [
     "test_get_best_move" >:: test_get_best_move;
     "test_eval_board" >:: test_eval_board;
     "test_validate" >:: test_validate;
     "test_misc" >:: test_misc
   ]
 
+let gui_tests =
+  "Gui test" >: test_list [
+    "test_print_board" >:: test_print_board;
+    "test_print_result" >:: test_print_result
+  ]
+
 let series =
   "All Tests" >::: [
-    section1_tests
+    board_tests;
+    bot_tests;
+    gui_tests;
   ]
 
 let () = 

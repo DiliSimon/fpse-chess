@@ -4,4 +4,5 @@
     core
     bot
     ounit2
-    board))
+    board
+    gui))
