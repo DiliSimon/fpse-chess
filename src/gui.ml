@@ -37,5 +37,4 @@ let print_result (p:player) =
   | Black -> "black") ^ " wins"
   |> print_string
 
-
 (* let b_1 = [[Occupied(King(White));Occupied(Queen(Black))];[Empty;Occupied(Pawn(White))]];; *)

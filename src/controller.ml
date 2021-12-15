@@ -1,10 +1,3 @@
-(* PvP or PvE *)
-(* val mode *)
-
-
-(* main control loop *)
-
-
 open Board
 open Core
 open Gui
@@ -14,6 +7,7 @@ let curr_player = ref White
 let bot_player = ref None
 module BaseBot = MinimaxBot(Bot.BaseEval)
 
+(* save game to designated file *)
 let save_game (b:board) (g:string) =
   let d = 
   List.fold b ~init:"" ~f:(
@@ -56,7 +50,7 @@ let save_game (b:board) (g:string) =
   
 
   
-
+(* read game from designated file *)
 let read_game (g:string) : board=
   (let turn = 
     (In_channel.read_all g
@@ -108,6 +102,7 @@ let read_game (g:string) : board=
       )]
     )
 
+(* parse move's string input *)
 let parse_move (s: string) (pair:int) (pos:int) =
   String.split_on_chars s ~on:[' ']
   |> Fn.flip List.nth_exn pair
@@ -115,6 +110,7 @@ let parse_move (s: string) (pair:int) (pos:int) =
   |> Fn.flip List.nth_exn pos
   |> int_of_string
 
+(* make a single move *)
 let handle_move (cur_b: board) ((orig_1,orig_2):int*int) ((targ_1,targ_2):int*int) (c_g:string) =
   let (new_b,res) = move cur_b (!curr_player) (orig_1,orig_2) (targ_1,targ_2)
   in
@@ -136,6 +132,7 @@ let handle_move (cur_b: board) ((orig_1,orig_2):int*int) ((targ_1,targ_2):int*in
     print_result (!curr_player)
   | Fail(m) -> print_string m)
 
+(* make a bot move *)
 let move_bot (c_g: string)=
   let cur_b = read_game c_g in
   match (!bot_player) with
@@ -215,8 +212,3 @@ let command =
     
 
 let () = Command.run command
-
-
-(* dune exec -- ./src/controller.exe --init *)
-
-(* dune exec -- ./src/controller.exe --move "1,0 2,0" *)
