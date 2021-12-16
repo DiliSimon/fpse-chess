@@ -68,7 +68,7 @@ let read_game (g:string) : board=
    match turn with 
    | "w" -> curr_player := White
    | "b" -> curr_player := Black
-   | _ -> print_string "bad save");
+   | _ -> print_string "bad save\n");
   (let bot_c = 
      (In_channel.read_all g
       |> String.split_on_chars ~on:['\n']
@@ -78,7 +78,7 @@ let read_game (g:string) : board=
    | "n" -> bot_player := None
    | "w" -> bot_player := Some White
    | "b" -> bot_player := Some Black  
-   | _ -> print_string "bad save");
+   | _ -> print_string "bad save\n");
   In_channel.read_all g
   |> String.split_on_chars ~on:['\n']
   |> List.drop_last_exn
@@ -138,10 +138,10 @@ let handle_move (cur_b: board) ((orig_1,orig_2):int*int) ((targ_1,targ_2):int*in
       | Black -> curr_player:= White);
      save_game new_b c_g;
      print_board new_b (!curr_player);
-     print_string "Check!"
+     print_string "Check!\n"
    | Checkmate ->
      print_result (!curr_player)
-   | Fail(m) -> print_string m)
+   | Fail(m) -> print_string (m^"\n"))
 
 (* make a bot move *)
 let move_bot (c_g: string)=
@@ -199,7 +199,7 @@ let command =
           let king_side = (match side with
               | "king" -> true
               | "queen" -> false
-              | _ -> failwith "bad instruction")
+              | _ -> failwith "bad instruction\n")
           in
           let res = Board.castling cur_b (!curr_player) king_side
           in
@@ -210,15 +210,15 @@ let command =
               | Black -> curr_player:= White);
              save_game b "cur_game";
              print_board b (!curr_player)
-           | None -> print_string "invalid move")
+           | None -> print_string "invalid move\n")
         | (_, _, _, _, Some file, None) ->
           save_game (read_game "cur_game") file;
-          print_string @@ "game saved to " ^ file
+          print_string @@ "game saved to " ^ file ^ "\n"
         | (_, _, _, _, None, Some file) ->
           save_game (read_game file) "cur_game";
           print_board (read_game file) (!curr_player)
         | (_,_,_,_,_,_) ->
-          print_string "bad instruction"
+          print_string "bad instruction\n"
     )
 
 
